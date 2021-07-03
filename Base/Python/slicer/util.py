@@ -2404,7 +2404,7 @@ def displayPythonShell(display=True):
 
   The console stays visible only if it was visible already.
 
-  :param show: If show is False, the context manager has no effect.
+  :param display: If show is False, the context manager has no effect.
 
   .. code-block:: python
 
@@ -2459,11 +2459,12 @@ class WaitCursor:
       qt.QApplication.restoreOverrideCursor()
 
 class MessageDialog:
-  def __init__(self, message, show=True, logLevel='INFO'):
+  def __init__(self, message, show=True, logLevel=logging.INFO):
     """Log the message and show a message box while the code in the context manager is being run.
 
     :param message: Text shown in the message box.
     :param show: If show is False, no dialog is shown.
+    :param logLevel: Log level used to log the message.
 
     .. code-block:: python
 
@@ -2473,6 +2474,8 @@ class MessageDialog:
       with slicer.util.messageContextManager(f'Sleeping for {n} seconds...'):
         time.sleep(n)
     """
+    if not isinstance(logLevel, int):
+      raise ValueError(f'Invalid log level: {logLevel}')
     import slicer
     self.message = message
     self.show = show and not slicer.app.testingEnabled()
@@ -2481,13 +2484,7 @@ class MessageDialog:
 
   def __enter__(self):
     import logging
-    numericLevel = getattr(logging, self.logLevel.upper(), None)
-    if not isinstance(numericLevel, int):
-        raise ValueError(f'Invalid log level: {self.logLevel}')
-    originalLevel = logging.root.level
-    logging.basicConfig(level=numericLevel)
-    logging.info(self.message)
-    logging.basicConfig(level=originalLevel)
+    logging.log(logLevel, self.message)
 
     if self.show:
       import qt, slicer
